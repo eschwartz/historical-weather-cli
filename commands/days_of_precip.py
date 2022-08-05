@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from utils import lookup_city
 
 help = """
     days-of-precip <city>
@@ -17,7 +18,9 @@ help = """
             days_of_precip      Average days of precipitation per year
 """
 
-def days_of_precip():
+def days_of_precip(city_shorthand):
+    city = lookup_city(city_shorthand)
+
     with open('sample.csv', 'r') as csvFile:
         reader = csv.DictReader(csvFile); 
 
@@ -26,11 +29,13 @@ def days_of_precip():
         first_date = None
 
         for row in reader:
-            if (first_date is None and ):
+            if (first_date is None):
                 print(row['DATE'])
                 first_date = parse_date(row['DATE'])
             
-            if (row['PRCP'] != '0' or row['SNOW'] != '0'):
+            has_precip = row['PRCP'] != '0' or row['SNOW'] != '0'
+            is_city = row['NAME'] == city
+            if (has_precip and is_city):
                 precip_days_count += 1
         
         last_date = parse_date(row['DATE'])
