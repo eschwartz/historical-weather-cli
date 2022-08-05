@@ -1,9 +1,8 @@
-import csv
 from datetime import datetime, timedelta
 from utils import lookup_city, debug_dict, debug, DAYS_PER_YEAR
 
 
-def days_of_precip(csv_file_path, city_shorthand):
+def days_of_precip(records, city_shorthand):
     """
     days-of-precip <city>
     
@@ -22,30 +21,27 @@ def days_of_precip(csv_file_path, city_shorthand):
     # Lookup the full city name
     city = lookup_city(city_shorthand)
 
-    # open the CSV file
-    with open(csv_file_path, 'r') as csv_file:
-        reader = csv.DictReader(csv_file); 
 
-        precip_days_count = 0  
+    precip_days_count = 0  
 
-        first_date = None
+    first_date = None
 
-        for row in reader:
-            # Grab the first date from the first row
-            # Assuming that we want to calculate using 
-            # the time span of the entire data set
-            # (vs. the time span of data for this one city)
-            if (first_date is None):
-                first_date = parse_date(row['DATE'])
-            
-            has_precip = (
-                (row['PRCP'] != '' and float(row['PRCP']))
-                or
-                (row['SNOW'] != '' and float(row['SNOW']))
-            )
-            is_city = row['NAME'] == city
-            if (has_precip and is_city):
-                precip_days_count += 1
+    for row in records:
+        # Grab the first date from the first row
+        # Assuming that we want to calculate using 
+        # the time span of the entire data set
+        # (vs. the time span of data for this one city)
+        if (first_date is None):
+            first_date = parse_date(row['DATE'])
+        
+        has_precip = (
+            (row['PRCP'] != '' and float(row['PRCP']))
+            or
+            (row['SNOW'] != '' and float(row['SNOW']))
+        )
+        is_city = row['NAME'] == city
+        if (has_precip and is_city):
+            precip_days_count += 1
         
     # Access the last date, from the last row
     # Add 1 day, because each record represent a full day

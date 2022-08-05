@@ -3,7 +3,7 @@ import os
 import sys
 import csv
 import json
-from commands.days_of_precip import days_of_precip, help as days_of_precip_help
+from commands.days_of_precip import days_of_precip
 from exceptions import CliUserError
 
 cli_help = f"""
@@ -18,7 +18,7 @@ Usage:
 
 Functions:
 
-{days_of_precip_help}
+{days_of_precip.__doc__}
 
     max-temp-delta [options]
 
@@ -48,10 +48,12 @@ Functions:
 csv_file = os.environ.get('HISTORICAL_WEATHER_CSV', 'noaa_historical_weather_10yr.csv');
 
 try:
-    res = days_of_precip(csv_file, 'bos')
+    with open(csv_file, 'r') as csv_file:
+        csv_records = csv.DictReader(csv_file); 
+        res = days_of_precip(csv_records, 'bos')
+    
+    print(json.dumps(res, indent=2));
 except CliUserError as err:
     # For user errors, print the message and exit
     print(err, file=sys.stderr)
     sys.exit(1)
-
-print(json.dumps(res, indent=2));
