@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
+import os
+import sys
 import csv
+import json
+from commands.days_of_precip import days_of_precip
+from exceptions import CliUserError
 
-cli_help = """
+cli_help = f"""
 CLI tool to aggregate climate data from 
 NOAA historical weather records.
 
@@ -13,19 +18,7 @@ Usage:
 
 Functions:
 
-    days-of-precip <city>
-    
-        Calculate the average number of days per year 
-        the given city had non-zero precipitation (either snow or rain) 
-        based on the entire period of the dataset
-
-        Arguments
-            <city>              Which city to evaluate
-                                eg. bos, jnu, mia
-
-        Output (JSON)
-            city                City being evaluated
-            days_of_precip      Average days of precipitation per year
+{days_of_precip.__doc__}
 
     max-temp-delta [options]
 
@@ -52,8 +45,15 @@ Functions:
             temp_change         Temperature delta
 """
 
-with open('sample.csv', 'r') as csvFile:
-    reader = csv.DictReader(csvFile);   
+csv_file = os.environ.get('HISTORICAL_WEATHER_CSV', 'noaa_historical_weather_10yr.csv');
 
-    for row in reader:
-        print(row['NAME'], row['TMAX'], row['TMIN'])
+try:
+    with open(csv_file, 'r') as csv_file:
+        csv_records = csv.DictReader(csv_file); 
+        res = days_of_precip(csv_records, 'bos')
+    
+    print(json.dumps(res, indent=2));
+except CliUserError as err:
+    # For user errors, print the message and exit
+    print(err, file=sys.stderr)
+    sys.exit(1)
