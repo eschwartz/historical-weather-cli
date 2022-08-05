@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 import csv
 import json
@@ -44,11 +45,13 @@ Functions:
             temp_change         Temperature delta
 """
 
+csv_file = os.environ.get('HISTORICAL_WEATHER_CSV', 'noaa_historical_weather_10yr.csv');
+
 try:
-    res = days_of_precip('bos')
+    res = days_of_precip(csv_file, 'bos')
 except CliUserError as err:
     # For user errors, print the message and exit
     print(err, file=sys.stderr)
     sys.exit(1)
 
-print(json.dumps(res));
+print(json.dumps(res, indent=2));
