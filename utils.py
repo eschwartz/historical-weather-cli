@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from datetime import datetime
 from exceptions import CliUserError
 
 cities_by_shorthand = {
@@ -35,6 +36,14 @@ def lookup_city(shorthand):
         )
     
     return cities_by_shorthand[shorthand]
+
+def parse_date(date_str):
+    # See format codes: 
+    # https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
+    return datetime.strptime(date_str, '%Y-%m-%d')
+
+def date_tostring(date):
+    return datetime.strftime(date, '%Y-%m-%d')
 
 is_debug_mode = os.environ.get('LOG_LEVEL', 'error') == 'debug'
 

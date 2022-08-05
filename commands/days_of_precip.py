@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from utils import lookup_city, debug_dict, debug, DAYS_PER_YEAR
+from datetime import timedelta
+from utils import lookup_city, debug_dict, debug, parse_date, DAYS_PER_YEAR
 
 
 def days_of_precip(records, city_shorthand):
@@ -21,9 +21,10 @@ def days_of_precip(records, city_shorthand):
     # Lookup the full city name
     city = lookup_city(city_shorthand)
 
-
+    # track days with precip
     precip_days_count = 0  
 
+    # to be defined during record iteration
     first_date = None
 
     for row in records:
@@ -72,8 +73,3 @@ def days_of_precip(records, city_shorthand):
         'city': city_shorthand,
         'days_of_precip': avg_days_of_precip_per_year
     }
-
-def parse_date(date_str):
-    # See format codes: 
-    # https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
-    return datetime.strptime(date_str, '%Y-%m-%d')
