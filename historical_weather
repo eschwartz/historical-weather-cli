@@ -4,6 +4,7 @@ import sys
 import csv
 import json
 from commands.days_of_precip import days_of_precip
+from commands.max_temp_delta import max_temp_delta
 from exceptions import CliUserError
 
 cli_help = f"""
@@ -50,7 +51,8 @@ csv_file = os.environ.get('HISTORICAL_WEATHER_CSV', 'noaa_historical_weather_10y
 try:
     with open(csv_file, 'r') as csv_file:
         csv_records = csv.DictReader(csv_file); 
-        res = days_of_precip(csv_records, 'bos')
+        #res = days_of_precip(csv_records, 'bos')
+        res = max_temp_delta(csv_records, 'jnu', 2017, 11)
     
     print(json.dumps(res, indent=2));
 except CliUserError as err:
