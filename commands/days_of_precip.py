@@ -1,23 +1,10 @@
 from datetime import timedelta
-from utils import lookup_city, debug_dict, debug, parse_date, DAYS_PER_YEAR
+import argparse
+import textwrap
+from utils import lookup_city, cities_by_shorthand, debug_dict, debug, parse_date, DAYS_PER_YEAR
 
 
 def days_of_precip(records, city):
-    """
-    days-of-precip <city>
-    
-        Calculate the average number of days per year 
-        the given city had non-zero precipitation (either snow or rain) 
-        based on the entire period of the dataset
-
-        Arguments
-            <city>              Which city to evaluate
-                                eg. bos, jnu, mia
-
-        Output (JSON)
-            city                City being evaluated
-            days_of_precip      Average days of precipitation per year
-    """
     # Lookup the full city name
     city_code = lookup_city(city)
 
@@ -73,3 +60,33 @@ def days_of_precip(records, city):
         'city': city,
         'days_of_precip': avg_days_of_precip_per_year
     }
+
+
+def register_argparser(subparsers):
+
+    help=textwrap.dedent("""
+        Calculate the average number of days per year 
+        the given city had non-zero precipitation (either snow or rain) 
+        based on the entire period of the dataset
+    """)
+
+    parser = subparsers.add_parser(
+        'days-of-precip',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=help,
+        help=help,
+        epilog=textwrap.dedent("""
+            Output (JSON)
+                city                City being evaluated
+                days_of_precip      Average days of precipitation per year
+        """)
+    )
+    parser.add_argument(
+        '--city',
+        required=True,
+        help="Which city to evaluate. eg. bos, jnu, mia",
+        choices=cities_by_shorthand.keys()
+    )
+    parser.set_defaults(run_command=days_of_precip)
+
+    return parser

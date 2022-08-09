@@ -4,116 +4,59 @@ import sys
 import csv
 import json
 import argparse
+import glob
 
-from commands.days_of_precip import days_of_precip
-from commands.max_temp_delta import max_temp_delta
+from commands.days_of_precip import register_argparser as register_days_of_precip
+from commands.max_temp_delta import register_argparser as register_max_temp_delta
 from utils import cities_by_shorthand
 from exceptions import CliUserError
 
-cli_help = f"""
-CLI tool to aggregate climate data from 
-NOAA historical weather records.
+# Setup top-level parser
+parser = argparse.ArgumentParser(
+    description="""
+        CLI tool to aggregate climate data from 
+        NOAA historical weather records.
 
-Weather data is expected as a CSV export from
-https://www.ncdc.noaa.gov/cdo-web/search
+        Weather data is expected as a CSV export from
+        https://www.ncdc.noaa.gov/cdo-web/search
+    """
+)
 
-Usage:
-    ./historical_weather <function-name> [options]
-
-Functions:
-
-{days_of_precip.__doc__}
-
-    max-temp-delta [options]
-
-        Determine the greatest single day low to high temperature
-        change for the designated city and time period (all time, 
-        yearly, monthly).
-
-        Options
-            --city              Which city to evaluate
-                                eg. bos, jnu, mia
-
-            --year              (Optional)
-                                Restrict search to a single year
-                                Format: YYYY, eg. 2018
-            
-            --month             (Optional)
-                                Restrict search to a particular month
-                                Requires --year
-                                Format: integer, 1-12
-        
-        Output (JSON)
-            city                City being evaluated
-            date                Date with largest temp delta
-            temp_change         Temperature delta
-"""
-
-def as_command(commandFn):
-    def run_command(args):
-        try:
-            with open(file, 'r') as csv_file:
-                csv_records = csv.DictReader(csv_file); 
-                #res = days_of_precip(csv_records, 'bos')
-                # https://www.peterbe.com/plog/vars-argparse-namespace-into-a-function
-                
-                # Remove the run_command fn from the args, before passing to the command fn
-                del args.run_command
-
-                res = commandFn(csv_records, **var(args))
-            
-            print(json.dumps(res, indent=2));
-        except CliUserError as err:
-            # For user errors, print the message and exit
-            print(err, file=sys.stderr)
-            sys.exit(1)
-
-    return run_command
-
-
-
-# See subparsers doc
-# especially section on using set_default()
-# to call different methods for each argument value
-# https://docs.python.org/3.3/library/argparse.html#sub-commands
-#
-# Setup top-level parse
-parser = argparse.ArgumentParser()
+# Allow overriding the default CSV file
 parser.add_argument(
     '-f', '--file',
     default='noaa_historical_weather_10yr.csv',
+    help="Location of NOAA CSV file export. Defaults to %(default)s"
 )
-subparsers = parser.add_subparsers()
+# Setup subcommands parser
+subparsers = parser.add_subparsers(
+    title="Subcommands",
+    help="Run command with -h for full help text"
+)
 
-# Add parser for days-of-precip command
-days_of_precip_parser = subparsers.add_parser(
-    'days_of_precip',
-    help = """
-        Calculate the average number of days per year 
-        the given city had non-zero precipitation (either snow or rain) 
-        based on the entire period of the dataset
-    """
-)
-days_of_precip_parser.add_argument(
-    'city',
-    metavar='city',
-    help="Which city to evaluate. eg. bos, jnu, mia",
-    choices=cities_by_shorthand.keys()
-)
-#days_of_precip_parser.set_defaults(run_command=as_command(days_of_precip))
-days_of_precip_parser.set_defaults(run_command=days_of_precip)
+# Register the individual command parser
+# TODO: could probably auto-load commands from all *.py files
+# in the the /commands directory
+register_days_of_precip(subparsers)
+register_max_temp_delta(subparsers)
 
+# Parse the arguments into a Namespace object (dict-like)
 args = parser.parse_args()
-print(args)
 
 try:
+    # Open the CSV file for reading
     with open(args.file, 'r') as csv_file:
+        # Create reader iterable, to parse the CSV by row
         csv_records = csv.DictReader(csv_file); 
 
-        # Pass the CSV iterable and the parse cli args (as kwargs)
+        # Create a copy of the CLI args to pass to the command fn
         command_args = argparse.Namespace(**vars(args))
+        # Remove the file and run_command attributes
+        # as these are just used for this initial setup
         del command_args.file
         del command_args.run_command
+
+        # Pass the CSV iterable and the parse cli args (as kwargs)
         res = args.run_command(csv_records, **vars(command_args))
     
     print(json.dumps(res, indent=2));
@@ -121,21 +64,3 @@ except CliUserError as err:
     # For user errors, print the message and exit
     print(err, file=sys.stderr)
     sys.exit(1)
-
-
-
-# csv_file = os.environ.get('HISTORICAL_WEATHER_CSV', 'noaa_historical_weather_10yr.csv');
-
-
-
-# try:
-#     with open(csv_file, 'r') as csv_file:
-#         csv_records = csv.DictReader(csv_file); 
-#         #res = days_of_precip(csv_records, 'bos')
-#         res = max_temp_delta(csv_records, 'jnu', 2017, 11)
-    
-#     print(json.dumps(res, indent=2));
-# except CliUserError as err:
-#     # For user errors, print the message and exit
-#     print(err, file=sys.stderr)
-#     sys.exit(1)
