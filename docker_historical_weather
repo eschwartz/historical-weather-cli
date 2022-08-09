@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -eu
+
+docker run \
+    --rm \
+    -it \
+    -w=/opt/app \
+    -v $(pwd):/opt/app \
+    python:3.9.10 \
+    /opt/app/historical_weather $@
