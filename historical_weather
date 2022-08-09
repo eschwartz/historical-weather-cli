@@ -7,7 +7,7 @@ import argparse
 import glob
 
 from commands.days_of_precip import register_argparser as register_days_of_precip
-from commands.max_temp_delta import max_temp_delta
+from commands.max_temp_delta import register_argparser as register_max_temp_delta
 from utils import cities_by_shorthand
 from exceptions import CliUserError
 
@@ -70,9 +70,9 @@ subparsers = parser.add_subparsers(
 # TODO: could probably auto-load commands from all *.py files
 # in the the /commands directory
 register_days_of_precip(subparsers)
+register_max_temp_delta(subparsers)
 
-
-
+# Parse the arguments into a Namespace object (dict-like)
 args = parser.parse_args()
 
 try:
