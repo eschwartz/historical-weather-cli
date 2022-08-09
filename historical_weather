@@ -43,7 +43,14 @@ register_max_temp_delta(subparsers)
 # Parse the arguments into a Namespace object (dict-like)
 args = parser.parse_args()
 
+
 try:
+    # Invalid command: print help
+    if (hasattr(args, 'run_command') is False):
+        print('Missing required subcommand', file=sys.stderr)
+        parser.print_help()
+        sys.exit(1)
+
     # Open the CSV file for reading
     with open(args.file, 'r') as csv_file:
         # Create reader iterable, to parse the CSV by row
