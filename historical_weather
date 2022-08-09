@@ -11,62 +11,30 @@ from commands.max_temp_delta import register_argparser as register_max_temp_delt
 from utils import cities_by_shorthand
 from exceptions import CliUserError
 
-cli_help = f"""
-CLI tool to aggregate climate data from 
-NOAA historical weather records.
+# Setup top-level parser
+parser = argparse.ArgumentParser(
+    description="""
+        CLI tool to aggregate climate data from 
+        NOAA historical weather records.
 
-Weather data is expected as a CSV export from
-https://www.ncdc.noaa.gov/cdo-web/search
+        Weather data is expected as a CSV export from
+        https://www.ncdc.noaa.gov/cdo-web/search
+    """
+)
 
-Usage:
-    ./historical_weather <function-name> [options]
-
-Functions:
-
-
-    max-temp-delta [options]
-
-        Determine the greatest single day low to high temperature
-        change for the designated city and time period (all time, 
-        yearly, monthly).
-
-        Options
-            --city              Which city to evaluate
-                                eg. bos, jnu, mia
-
-            --year              (Optional)
-                                Restrict search to a single year
-                                Format: YYYY, eg. 2018
-            
-            --month             (Optional)
-                                Restrict search to a particular month
-                                Requires --year
-                                Format: integer, 1-12
-        
-        Output (JSON)
-            city                City being evaluated
-            date                Date with largest temp delta
-            temp_change         Temperature delta
-"""
-
-
-
-# See subparsers doc
-# especially section on using set_default()
-# to call different methods for each argument value
-# https://docs.python.org/3.3/library/argparse.html#sub-commands
-#
-# Setup top-level parse
-parser = argparse.ArgumentParser()
+# Allow overriding the default CSV file
 parser.add_argument(
     '-f', '--file',
     default='noaa_historical_weather_10yr.csv',
+    help="Location of NOAA CSV file export. Defaults to %(default)s"
 )
+# Setup subcommands parser
 subparsers = parser.add_subparsers(
     title="Subcommands",
     help="Run command with -h for full help text"
 )
 
+# Register the individual command parser
 # TODO: could probably auto-load commands from all *.py files
 # in the the /commands directory
 register_days_of_precip(subparsers)
@@ -76,13 +44,19 @@ register_max_temp_delta(subparsers)
 args = parser.parse_args()
 
 try:
+    # Open the CSV file for reading
     with open(args.file, 'r') as csv_file:
+        # Create reader iterable, to parse the CSV by row
         csv_records = csv.DictReader(csv_file); 
 
-        # Pass the CSV iterable and the parse cli args (as kwargs)
+        # Create a copy of the CLI args to pass to the command fn
         command_args = argparse.Namespace(**vars(args))
+        # Remove the file and run_command attributes
+        # as these are just used for this initial setup
         del command_args.file
         del command_args.run_command
+
+        # Pass the CSV iterable and the parse cli args (as kwargs)
         res = args.run_command(csv_records, **vars(command_args))
     
     print(json.dumps(res, indent=2));
