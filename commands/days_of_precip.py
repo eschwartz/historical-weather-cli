@@ -2,7 +2,7 @@ from datetime import timedelta
 from utils import lookup_city, debug_dict, debug, parse_date, DAYS_PER_YEAR
 
 
-def days_of_precip(records, city_shorthand):
+def days_of_precip(records, city):
     """
     days-of-precip <city>
     
@@ -19,7 +19,7 @@ def days_of_precip(records, city_shorthand):
             days_of_precip      Average days of precipitation per year
     """
     # Lookup the full city name
-    city = lookup_city(city_shorthand)
+    city_code = lookup_city(city)
 
     # track days with precip
     precip_days_count = 0  
@@ -40,7 +40,7 @@ def days_of_precip(records, city_shorthand):
             or
             (row['SNOW'] != '' and float(row['SNOW']))
         )
-        is_city = row['NAME'] == city
+        is_city = row['NAME'] == city_code
         if (has_precip and is_city):
             precip_days_count += 1
         
@@ -60,7 +60,7 @@ def days_of_precip(records, city_shorthand):
     # debug logs, to help understand the calculation
     # (set LOG_LEVEL=debug to see these)
     debug_dict({
-        'city': city,
+        'city': city_code,
         'first_date': first_date,
         'last_date': last_date,
         'time_span_days ': time_delta.days,
@@ -70,6 +70,6 @@ def days_of_precip(records, city_shorthand):
     })
 
     return {
-        'city': city_shorthand,
+        'city': city,
         'days_of_precip': avg_days_of_precip_per_year
     }
